@@ -1,0 +1,126 @@
+[
+  {
+    "id": "flow-meteo",
+    "type": "tab",
+    "label": "Station Météo → InfluxDB",
+    "disabled": false
+  },
+  {
+    "id": "mqtt-in-temp",
+    "type": "mqtt in",
+    "z": "flow-meteo",
+    "name": "Temperature",
+    "topic": "meteo/+/temperature",
+    "qos": "0",
+    "broker": "broker-local",
+    "x": 120, "y": 80,
+    "wires": [["fn-parse-temp"]]
+  },
+  {
+    "id": "fn-parse-temp",
+    "type": "function",
+    "z": "flow-meteo",
+    "name": "→ InfluxDB format",
+    "func": "const device = msg.topic.split('/')[1];\nmsg.payload = [{\n  measurement: 'meteo',\n  tags: { device: device },\n  fields: { temperature: parseFloat(msg.payload) },\n  timestamp: new Date()\n}];\nreturn msg;",
+    "x": 340, "y": 80,
+    "wires": [["influx-out"]]
+  },
+  {
+    "id": "mqtt-in-hum",
+    "type": "mqtt in",
+    "z": "flow-meteo",
+    "name": "Humidité",
+    "topic": "meteo/+/humidite",
+    "qos": "0",
+    "broker": "broker-local",
+    "x": 120, "y": 160,
+    "wires": [["fn-parse-hum"]]
+  },
+  {
+    "id": "fn-parse-hum",
+    "type": "function",
+    "z": "flow-meteo",
+    "name": "→ InfluxDB format",
+    "func": "const device = msg.topic.split('/')[1];\nmsg.payload = [{\n  measurement: 'meteo',\n  tags: { device: device },\n  fields: { humidite: parseFloat(msg.payload) },\n  timestamp: new Date()\n}];\nreturn msg;",
+    "x": 340, "y": 160,
+    "wires": [["influx-out"]]
+  },
+  {
+    "id": "mqtt-in-pres",
+    "type": "mqtt in",
+    "z": "flow-meteo",
+    "name": "Pression",
+    "topic": "meteo/+/pression",
+    "qos": "0",
+    "broker": "broker-local",
+    "x": 120, "y": 240,
+    "wires": [["fn-parse-pres"]]
+  },
+  {
+    "id": "fn-parse-pres",
+    "type": "function",
+    "z": "flow-meteo",
+    "name": "→ InfluxDB format",
+    "func": "const device = msg.topic.split('/')[1];\nmsg.payload = [{\n  measurement: 'meteo',\n  tags: { device: device },\n  fields: { pression: parseFloat(msg.payload) },\n  timestamp: new Date()\n}];\nreturn msg;",
+    "x": 340, "y": 240,
+    "wires": [["influx-out"]]
+  },
+  {
+    "id": "mqtt-in-fleet",
+    "type": "mqtt in",
+    "z": "flow-meteo",
+    "name": "Heartbeat fleet",
+    "topic": "fleet/+/heartbeat",
+    "qos": "0",
+    "broker": "broker-local",
+    "x": 120, "y": 340,
+    "wires": [["fn-parse-fleet"]]
+  },
+  {
+    "id": "fn-parse-fleet",
+    "type": "function",
+    "z": "flow-meteo",
+    "name": "→ InfluxDB format",
+    "func": "const device = msg.topic.split('/')[1];\nconst data = JSON.parse(msg.payload);\nmsg.payload = [{\n  measurement: 'fleet',\n  tags: { device: device },\n  fields: {\n    uptime: data.uptime || 0,\n    wifi: data.wifi ? 1 : 0,\n    mqtt: data.mqtt ? 1 : 0\n  },\n  timestamp: new Date()\n}];\nreturn msg;",
+    "x": 340, "y": 340,
+    "wires": [["influx-out"]]
+  },
+  {
+    "id": "influx-out",
+    "type": "influxdb out",
+    "z": "flow-meteo",
+    "name": "→ InfluxDB",
+    "influxdb": "influx-config",
+    "measurement": "",
+    "precision": "ms",
+    "retentionPolicy": "",
+    "x": 580, "y": 200,
+    "wires": []
+  },
+  {
+    "id": "broker-local",
+    "type": "mqtt-broker",
+    "name": "Mosquitto local",
+    "broker": "mosquitto",
+    "port": "1883",
+    "clientid": "nodered-meteo",
+    "keepalive": "60",
+    "cleansession": true
+  },
+  {
+    "id": "influx-config",
+    "type": "influxdb",
+    "hostname": "influxdb",
+    "port": "8086",
+    "protocol": "http",
+    "database": "station",
+    "name": "InfluxDB local",
+    "usetls": false,
+    "influxdbVersion": "2.0",
+    "url": "http://influxdb:8086",
+    "rejectUnauthorized": false,
+    "token": "meteo-super-token-changeme",
+    "organization": "meteo-org",
+    "bucket": "station"
+  }
+]

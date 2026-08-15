@@ -1,0 +1,105 @@
+{
+  "title": "Station Météo STM32",
+  "uid": "stm32-meteo",
+  "schemaVersion": 39,
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "gauge",
+      "title": "Température",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 8 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "min": -20, "max": 60,
+          "thresholds": {
+            "steps": [
+              { "color": "blue",  "value": null },
+              { "color": "green", "value": 15 },
+              { "color": "orange","value": 30 },
+              { "color": "red",   "value": 40 }
+            ]
+          }
+        }
+      },
+      "targets": [{
+        "datasource": "InfluxDB",
+        "query": "from(bucket: \"station\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"meteo\" and r._field == \"temperature\") |> last()"
+      }]
+    },
+    {
+      "id": 2,
+      "type": "gauge",
+      "title": "Humidité",
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 8 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0, "max": 100,
+          "thresholds": {
+            "steps": [
+              { "color": "red",    "value": null },
+              { "color": "green",  "value": 30 },
+              { "color": "blue",   "value": 70 }
+            ]
+          }
+        }
+      },
+      "targets": [{
+        "datasource": "InfluxDB",
+        "query": "from(bucket: \"station\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"meteo\" and r._field == \"humidite\") |> last()"
+      }]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Pression",
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "pressurehpa" } },
+      "targets": [{
+        "datasource": "InfluxDB",
+        "query": "from(bucket: \"station\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"meteo\" and r._field == \"pression\") |> last()"
+      }]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Uptime",
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [{
+        "datasource": "InfluxDB",
+        "query": "from(bucket: \"station\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"fleet\" and r._field == \"uptime\") |> last()"
+      }]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Température — 6 heures",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 10 },
+      "fieldConfig": { "defaults": { "unit": "celsius", "color": { "mode": "palette-classic" } } },
+      "targets": [{
+        "datasource": "InfluxDB",
+        "query": "from(bucket: \"station\") |> range(start: -6h) |> filter(fn: (r) => r._measurement == \"meteo\" and r._field == \"temperature\") |> aggregateWindow(every: 1m, fn: mean)"
+      }]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Humidité & Pression — 6 heures",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 10 },
+      "targets": [
+        {
+          "datasource": "InfluxDB",
+          "query": "from(bucket: \"station\") |> range(start: -6h) |> filter(fn: (r) => r._measurement == \"meteo\" and r._field == \"humidite\") |> aggregateWindow(every: 1m, fn: mean)"
+        },
+        {
+          "datasource": "InfluxDB",
+          "query": "from(bucket: \"station\") |> range(start: -6h) |> filter(fn: (r) => r._measurement == \"meteo\" and r._field == \"pression\") |> aggregateWindow(every: 1m, fn: mean)"
+        }
+      ]
+    }
+  ]
+}

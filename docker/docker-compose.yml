@@ -1,0 +1,70 @@
+version: "3.8"
+
+services:
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: meteo-mqtt
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+      - "9001:9001"   # WebSocket
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+
+  influxdb:
+    image: influxdb:2.7
+    container_name: meteo-influxdb
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: meteo1234
+      DOCKER_INFLUXDB_INIT_ORG: meteo-org
+      DOCKER_INFLUXDB_INIT_BUCKET: station
+      DOCKER_INFLUXDB_INIT_RETENTION: 30d
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: meteo-super-token-changeme
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+
+  nodered:
+    image: nodered/node-red:3
+    container_name: meteo-nodered
+    restart: unless-stopped
+    ports:
+      - "1880:1880"
+    depends_on:
+      - mosquitto
+      - influxdb
+    volumes:
+      - nodered_data:/data
+      - ./node-red/flows.json:/data/flows.json
+
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: meteo-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - influxdb
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: meteo1234
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
+      - ./grafana/dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yml
+      - ./grafana/dashboard.json:/var/lib/grafana/dashboards/station.json
+
+volumes:
+  mosquitto_data:
+  mosquitto_log:
+  influxdb_data:
+  nodered_data:
+  grafana_data:
