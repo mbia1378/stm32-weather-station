@@ -1,0 +1,66 @@
+#pragma once
+
+// ─── Identité appareil ──────────────────────────────────
+#define DEVICE_ID       "stm32-meteo-01"
+#define FIRMWARE_VER    "2.0.0"
+
+// ─── Feature flags ──────────────────────────────────────
+#define USE_WIFI        1
+#define USE_LORA        0   // 1 = active module SX1276 sur SPI
+#define USE_CAMERA      0   // 1 = active OV7670 via DCMI
+#define USE_OTA         1
+#define USE_FREERTOS    1
+
+// ─── WiFi ───────────────────────────────────────────────
+#define WIFI_SSID       "TON_SSID"
+#define WIFI_PASSWORD   "TON_MOT_DE_PASSE"
+
+// ─── MQTT ───────────────────────────────────────────────
+#define MQTT_SERVER     "192.168.1.100"   // IP de ta machine (stack Docker)
+#define MQTT_PORT       1883
+#define MQTT_CLIENT_ID  DEVICE_ID
+#define MQTT_TOPIC_BASE "meteo/" DEVICE_ID
+
+// Topics data
+#define MQTT_TOPIC_TEMP     MQTT_TOPIC_BASE "/temperature"
+#define MQTT_TOPIC_HUM      MQTT_TOPIC_BASE "/humidite"
+#define MQTT_TOPIC_PRES     MQTT_TOPIC_BASE "/pression"
+#define MQTT_TOPIC_CAMERA   MQTT_TOPIC_BASE "/image"
+
+// Topics fleet
+#define MQTT_TOPIC_HEARTBEAT    "fleet/" DEVICE_ID "/heartbeat"
+#define MQTT_TOPIC_CONFIG_IN    "fleet/" DEVICE_ID "/config"
+#define MQTT_TOPIC_STATUS       "fleet/" DEVICE_ID "/status"
+#define MQTT_TOPIC_OTA_CMD      "fleet/" DEVICE_ID "/ota/start"
+#define MQTT_TOPIC_OTA_CHUNK    "fleet/" DEVICE_ID "/ota/chunk"
+#define MQTT_TOPIC_OTA_ACK      "fleet/" DEVICE_ID "/ota/ack"
+
+// ─── Broches STM32 ──────────────────────────────────────
+#define I2C_SDA         PB7
+#define I2C_SCL         PB6
+#define DHT_PIN         PA1
+#define DHT_TYPE        DHT22
+#define ESP_SERIAL      Serial2   // TX=PA2, RX=PA3
+#define ESP_BAUD        115200
+
+// LoRa SX1276 (SPI1 sur Nucleo F4)
+#define LORA_NSS        PA4
+#define LORA_RST        PC3
+#define LORA_DIO0       PC4
+#define LORA_FREQUENCY  868E6    // 868 MHz Europe
+
+// OV7670 (DCMI sur STM32F4)
+#define CAM_VSYNC       PB7
+#define CAM_HSYNC       PA4
+#define CAM_PCLK        PA6
+#define CAM_XCLK        PA8   // MCO1 — 24 MHz
+
+// ─── Timings ────────────────────────────────────────────
+#define LECTURE_INTERVALLE_MS   30000
+#define HEARTBEAT_INTERVALLE_MS 60000
+#define MQTT_KEEPALIVE_S        60
+
+// ─── OTA ────────────────────────────────────────────────
+#define OTA_FLASH_ADDR  0x08040000   // Secteur 6 — STM32F401 (256KB offset)
+#define OTA_MAX_SIZE    (256 * 1024) // 256 KB max firmware
+#define OTA_CHUNK_SIZE  512
